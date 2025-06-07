@@ -1,103 +1,453 @@
+'use client';
+
 import Image from "next/image";
+import React, { useState, useRef, useEffect } from 'react';
+
+// Simple icons
+const MicIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z"/>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+      <line x1="12" y1="19" x2="12" y2="23"/>
+      <line x1="8" y1="23" x2="16" y2="23"/>
+    </svg>
+);
+
+const SquareIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+    </svg>
+);
+
+const PlayIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polygon points="5,3 19,12 5,21"/>
+    </svg>
+);
+
+const PauseIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="6" y="4" width="4" height="16"/>
+      <rect x="14" y="4" width="4" height="16"/>
+    </svg>
+);
+
+const DownloadIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7,10 12,15 17,10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+);
+
+const TrashIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="3,6 5,6 21,6"/>
+      <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+    </svg>
+);
+
+const WaveSurferRecorder = () => {
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [wavesurfer, setWavesurfer] = useState<any>(null);
+  const [recordPlugin, setRecordPlugin] = useState<any>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [recordedDuration, setRecordedDuration] = useState(0);
+
+  const waveformRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const generateRecordingName = (): string => {
+    const now = new Date();
+    return `Recording ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+  };
+
+  useEffect(() => {
+    // Initialize WaveSurfer when component mounts
+    const initWaveSurfer = async () => {
+      try {
+        // Dynamic import to avoid SSR issues
+        const WaveSurfer = (await import('wavesurfer.js')).default;
+        const RecordPlugin = (await import('wavesurfer.js/dist/plugins/record.js')).default;
+
+        if (!waveformRef.current) return;
+
+        // Create record plugin
+        const record = RecordPlugin.create({
+          scrollingWaveform: true,
+          renderRecordedAudio: false,
+        });
+
+        // Create WaveSurfer instance
+        const ws = WaveSurfer.create({
+          container: waveformRef.current,
+          waveColor: '#dc2626',
+          progressColor: '#b91c1c',
+          height: 80,
+          barWidth: 2,
+          barGap: 1,
+          plugins: [record],
+        });
+
+        // Set up event listeners
+        record.on('record-start', () => {
+          console.log('Recording started');
+          setIsRecording(true);
+          setIsPaused(false);
+          setRecordingTime(0);
+        });
+
+        record.on('record-end', (blob: Blob) => {
+          console.log('Recording ended', blob);
+
+          // Clean up previous audio URL to prevent memory leaks
+          if (audioUrl) {
+            URL.revokeObjectURL(audioUrl);
+          }
+
+          // Store the new audio
+          const url = URL.createObjectURL(blob);
+          setAudioBlob(blob);
+          setAudioUrl(url);
+          setRecordedDuration(recordingTime);
+
+          // Load the recorded audio into wavesurfer for playback
+          ws.load(url);
+        });
+
+        record.on('record-pause', () => {
+          console.log('Recording paused');
+          setIsPaused(true);
+        });
+
+        record.on('record-resume', () => {
+          console.log('Recording resumed');
+          setIsPaused(false);
+        });
+
+        // Set up playback event listeners
+        ws.on('play', () => {
+          setIsPlaying(true);
+        });
+
+        ws.on('pause', () => {
+          setIsPlaying(false);
+        });
+
+        ws.on('finish', () => {
+          setIsPlaying(false);
+        });
+
+        setWavesurfer(ws);
+        setRecordPlugin(record);
+
+      } catch (error) {
+        console.error('Error initializing WaveSurfer:', error);
+      }
+    };
+
+    initWaveSurfer();
+
+    // Cleanup function
+    return () => {
+      if (wavesurfer) {
+        wavesurfer.destroy();
+      }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isRecording && !isPaused) {
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [isRecording, isPaused]);
+
+  const startRecording = async () => {
+    if (!recordPlugin) {
+      alert('Audio recorder not initialized yet. Please wait a moment and try again.');
+      return;
+    }
+
+    try {
+      // Clear previous recording
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+        setAudioUrl(null);
+        setAudioBlob(null);
+        setRecordedDuration(0);
+        setIsPlaying(false);
+      }
+
+      await recordPlugin.startRecording();
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      alert('Error starting recording. Please ensure microphone permissions are granted.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (recordPlugin && isRecording) {
+      recordPlugin.stopRecording();
+      setIsRecording(false);
+      setIsPaused(false);
+      setRecordingTime(0);
+    }
+  };
+
+  const togglePause = () => {
+    if (!recordPlugin) return;
+
+    if (isPaused) {
+      recordPlugin.resumeRecording();
+    } else {
+      recordPlugin.pauseRecording();
+    }
+  };
+
+  const togglePlayback = () => {
+    if (!wavesurfer || !audioUrl) return;
+
+    if (isPlaying) {
+      wavesurfer.pause();
+    } else {
+      wavesurfer.play();
+    }
+  };
+
+  const downloadAudio = () => {
+    if (!audioBlob || !audioUrl) return;
+
+    const a = document.createElement('a');
+    a.href = audioUrl;
+    a.download = `${generateRecordingName()}.wav`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const deleteAudio = () => {
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
+    setAudioUrl(null);
+    setAudioBlob(null);
+    setRecordedDuration(0);
+    setIsPlaying(false);
+
+    // Clear the waveform
+    if (wavesurfer) {
+      wavesurfer.empty();
+    }
+  };
+
+  return (
+      <div className="w-full max-w-sm mx-auto p-4 bg-white rounded-lg shadow-lg">
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-gray-800 mb-1">Voice Recorder</h2>
+          <p className="text-sm text-gray-600">Powered by WaveSurfer.js</p>
+        </div>
+
+        {/* Waveform Container */}
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div ref={waveformRef} className="w-full min-h-[80px]" />
+        </div>
+
+        {/* Recording Controls */}
+        <div className="flex items-center justify-center space-x-3 mb-3">
+          {!isRecording ? (
+              <button
+                  onClick={startRecording}
+                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors duration-200 text-sm"
+              >
+                <MicIcon />
+                <span>Record</span>
+              </button>
+          ) : (
+              <>
+                <button
+                    onClick={togglePause}
+                    className="flex items-center space-x-1 px-3 py-2 bg-gray-600 text-white rounded-full hover:bg-gray-700 transition-colors duration-200 text-sm"
+                >
+                  {isPaused ? <PlayIcon /> : <PauseIcon />}
+                  <span>{isPaused ? 'Resume' : 'Pause'}</span>
+                </button>
+                <button
+                    onClick={stopRecording}
+                    className="flex items-center space-x-1 px-3 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors duration-200 text-sm"
+                >
+                  <SquareIcon />
+                  <span>Stop</span>
+                </button>
+              </>
+          )}
+        </div>
+
+        {/* Playback Controls - Only show when audio is available */}
+        {audioUrl && !isRecording && (
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <button
+                  onClick={togglePlayback}
+                  className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors duration-200 text-sm"
+              >
+                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                <span>{isPlaying ? 'Pause' : 'Play'}</span>
+              </button>
+              <button
+                  onClick={downloadAudio}
+                  className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors duration-200 text-sm"
+              >
+                <DownloadIcon />
+                <span>Download</span>
+              </button>
+              <button
+                  onClick={deleteAudio}
+                  className="flex items-center space-x-1 px-2 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors duration-200 text-sm"
+              >
+                <TrashIcon />
+              </button>
+            </div>
+        )}
+
+        {/* Recording Status */}
+        <div className="text-center">
+          {isRecording && (
+              <div className="flex items-center justify-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-yellow-500' : 'bg-red-500 animate-pulse'}`}></div>
+                <span className="text-lg font-mono font-bold text-gray-800">
+              {formatTime(recordingTime)}
+            </span>
+                <span className="text-xs text-gray-600">
+              {isPaused ? 'Paused' : 'Recording'}
+            </span>
+              </div>
+          )}
+          {!isRecording && recordingTime === 0 && !audioUrl && (
+              <p className="text-sm text-gray-500">Ready to record</p>
+          )}
+          {!isRecording && audioUrl && (
+              <div className="flex items-center justify-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-blue-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                <span className="text-sm text-gray-600">
+              Recording ready • {formatTime(recordedDuration)}
+            </span>
+              </div>
+          )}
+        </div>
+      </div>
+  );
+};
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <>
+        {/* Debug overlay - only visible on larger screens */}
+        <div className="hidden sm:block fixed inset-0 bg-gray-100 z-0">
+          <div className="flex justify-center h-full">
+            <div className="w-full max-w-sm border-4 border-red-500 relative">
+              <div className="absolute -left-20 top-4 text-red-500 text-xs font-mono rotate-90 origin-left">
+                Mobile Viewport
+              </div>
+              <div className="absolute -right-16 top-4 text-red-500 text-xs font-mono -rotate-90 origin-right">
+                375px max
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        {/* Main content - full width on mobile, constrained on desktop */}
+        <div className="min-h-screen bg-white sm:bg-transparent sm:flex sm:justify-center relative z-10">
+          <div className="w-full sm:w-full sm:max-w-sm sm:bg-white min-h-screen">
+            <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-4 pb-16 gap-8 font-[family-name:var(--font-geist-sans)]">
+              <main className="flex flex-col gap-6 row-start-2 items-center w-full px-2">
+
+                {/* Audio Recorder Component */}
+                <WaveSurferRecorder />
+
+                {/* Container */}
+                <div className="w-full max-w-sm mx-auto p-4 bg-gray-100 rounded-lg">
+                  <p>This is a container</p>
+                </div>
+
+              </main>
+
+              <footer className="row-start-3 flex gap-4 flex-wrap items-center justify-center text-xs">
+                <a
+                    className="flex items-center gap-1 hover:underline hover:underline-offset-4"
+                    href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                  <Image
+                      aria-hidden
+                      src="/file.svg"
+                      alt="File icon"
+                      width={12}
+                      height={12}
+                  />
+                  Learn
+                </a>
+                <a
+                    className="flex items-center gap-1 hover:underline hover:underline-offset-4"
+                    href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                  <Image
+                      aria-hidden
+                      src="/window.svg"
+                      alt="Window icon"
+                      width={12}
+                      height={12}
+                  />
+                  Examples
+                </a>
+                <a
+                    className="flex items-center gap-1 hover:underline hover:underline-offset-4"
+                    href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                  <Image
+                      aria-hidden
+                      src="/globe.svg"
+                      alt="Globe icon"
+                      width={12}
+                      height={12}
+                  />
+                  Go to nextjs.org →
+                </a>
+              </footer>
+            </div>
+          </div>
+        </div>
+      </>
   );
 }
