@@ -1,11 +1,12 @@
-'use client';
-import { useEffect } from 'react';
-import apiAuth from '@/lib/apiAuth';
+"use client";
+import { useEffect } from "react";
 
 const GoogleSigninPage = () => {
   useEffect(() => {
     // Redirect to Google auth endpoint
-    const redirectUrl = encodeURIComponent('https://api.suatalk.site/auth/google?redirect=https%3A%2F%2Flocalhost%3A3000');
+    const redirectUrl = encodeURIComponent(
+      "https://api.suatalk.site/auth/google?redirect=https%3A%2F%2Flocalhost%3A3000"
+    );
     window.location.href = `${redirectUrl}`;
   }, []);
 
@@ -21,4 +22,4 @@ const GoogleSigninPage = () => {
 
 export default GoogleSigninPage;
 
-// Add a simple CSS loader if needed 
+// Add a simple CSS loader if needed

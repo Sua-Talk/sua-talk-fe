@@ -1,5 +1,4 @@
-import apiFetch from './apiBase';
-import { redirect } from 'next/navigation';
+import apiFetch from "./apiBase";
 
 interface Baby {
   id: string;
@@ -19,8 +18,8 @@ interface Baby {
 }
 
 const getAuthHeaders = (): Record<string, string> => {
-  const accessToken = localStorage.getItem('auth_token');
-  console.log('accessToken', accessToken);
+  const accessToken = localStorage.getItem("auth_token");
+  console.log("accessToken", accessToken);
   if (!accessToken) {
     return {};
   }
@@ -31,22 +30,24 @@ const getAuthHeaders = (): Record<string, string> => {
 
 export const apiBabies = {
   // Get all babies for the current user
-  getBabies: () => apiFetch('/babies', {
-    headers: getAuthHeaders(),
-  }),
+  getBabies: () =>
+    apiFetch("/babies", {
+      headers: getAuthHeaders(),
+    }),
 
   // Get a specific baby by ID
-  getBaby: (id: string) => apiFetch(`/babies/${id}`, {
-    headers: getAuthHeaders(),
-  }),
+  getBaby: (id: string) =>
+    apiFetch(`/babies/${id}`, {
+      headers: getAuthHeaders(),
+    }),
 
   // Create a new baby
-  createBaby: (baby: Omit<Baby, 'id' | 'parentId'>) =>
-    apiFetch('/babies', {
-      method: 'POST',
+  createBaby: (baby: Omit<Baby, "id" | "parentId">) =>
+    apiFetch("/babies", {
+      method: "POST",
       headers: {
         ...getAuthHeaders(),
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(baby),
     }),
@@ -54,10 +55,10 @@ export const apiBabies = {
   // Update a baby's information
   updateBaby: (id: string, baby: Partial<Baby>) =>
     apiFetch(`/babies/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
         ...getAuthHeaders(),
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(baby),
     }),
@@ -65,9 +66,9 @@ export const apiBabies = {
   // Delete a baby
   deleteBaby: (id: string) =>
     apiFetch(`/babies/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: getAuthHeaders(),
     }),
 };
 
-export default apiBabies; 
+export default apiBabies;

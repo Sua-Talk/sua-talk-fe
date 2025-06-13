@@ -1,12 +1,11 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext';
-import { localStorageUtils } from '@/lib/localStorage';
+import React, { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
 
 const AnalysisPage = () => {
-  const { isAuthenticated, getUserInfo } = useAuth();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
@@ -18,40 +17,49 @@ const AnalysisPage = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/auth/login');
+      router.push("/auth/login");
     } else {
-      const recordingId = searchParams.get('id');
+      const recordingId = searchParams.get("id");
       if (!recordingId) {
-        router.push('/sound');
+        router.push("/sound");
         return;
       }
 
       // Simulate loading between 3-5 seconds
       const loadingTime = Math.floor(Math.random() * (5000 - 3000 + 1)) + 3000;
-      
+
       setTimeout(() => {
         // Mock analysis result
-        const categories = ['lapar', 'kembung', 'tidak nyaman', 'lelah', 'sakit perut'];
-        const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+        const categories = [
+          "lapar",
+          "kembung",
+          "tidak nyaman",
+          "lelah",
+          "sakit perut",
+        ];
+        const randomCategory =
+          categories[Math.floor(Math.random() * categories.length)];
         const confidence = Math.random() * 0.3 + 0.7; // Random confidence between 0.7 and 1.0
-        
+
         const descriptions = {
-          lapar: 'Bayi menunjukkan tanda-tanda kelaparan. Segera berikan ASI atau susu formula.',
-          sakit: 'Bayi menunjukkan tanda-tanda ketidaknyamanan fisik. Periksa suhu tubuh dan kondisi fisik bayi.',
-          'tidak nyaman': 'Bayi merasa tidak nyaman. Periksa popok, pakaian, atau suhu ruangan.'
+          lapar:
+            "Bayi menunjukkan tanda-tanda kelaparan. Segera berikan ASI atau susu formula.",
+          sakit:
+            "Bayi menunjukkan tanda-tanda ketidaknyamanan fisik. Periksa suhu tubuh dan kondisi fisik bayi.",
+          "tidak nyaman":
+            "Bayi merasa tidak nyaman. Periksa popok, pakaian, atau suhu ruangan.",
         };
 
         setAnalysisResult({
           category: randomCategory,
           confidence: confidence,
-          description: descriptions[randomCategory as keyof typeof descriptions]
+          description:
+            descriptions[randomCategory as keyof typeof descriptions],
         });
         setIsLoading(false);
       }, loadingTime);
     }
   }, [isAuthenticated, router, searchParams]);
-
-  const userInfo = getUserInfo();
 
   if (isLoading) {
     return (
@@ -95,25 +103,32 @@ const AnalysisPage = () => {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-800 mb-2">Kategori Tangisan</h2>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                      Kategori Tangisan
+                    </h2>
                     <div className="flex items-center space-x-2">
                       <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
                         {analysisResult.category}
                       </span>
                       <span className="text-sm text-gray-600">
-                        (Akurasi: {(analysisResult.confidence * 100).toFixed(1)}%)
+                        (Akurasi: {(analysisResult.confidence * 100).toFixed(1)}
+                        %)
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-800 mb-2">Deskripsi</h2>
-                    <p className="text-gray-600">{analysisResult.description}</p>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                      Deskripsi
+                    </h2>
+                    <p className="text-gray-600">
+                      {analysisResult.description}
+                    </p>
                   </div>
 
                   <div className="pt-4">
                     <button
-                      onClick={() => router.push('/sound')}
+                      onClick={() => router.push("/sound")}
                       className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                     >
                       Kembali ke Rekaman

@@ -1,49 +1,21 @@
-import apiFetch from './apiBase';
-import { redirect } from 'next/navigation';
+import apiFetch from "./apiBase";
 
 interface MLPrediction {
   id: string;
   babyId: string;
-  type: 'cry' | 'development' | 'health';
+  type: "cry" | "development" | "health";
   prediction: string;
   confidence: number;
   createdAt: string;
 }
 
-interface MLClass {
-  id: string;
-  name: string;
-  description: string;
-}
-
-interface MLAnalysis {
-  id: string;
-  recordingId: string;
-  results: {
-    type: string;
-    confidence: number;
-    details: Record<string, any>;
-  }[];
-  createdAt: string;
-}
-
-interface MLStats {
-  totalAnalyses: number;
-  averageConfidence: number;
-  analysesByType: {
-    [key: string]: number;
-  };
-  recentAnalyses: MLAnalysis[];
-  lastUpdated: string;
-}
-
 const handleAuthError = () => {
-  alert('Your session has expired. Please login again.');
-  redirect('/login');
+  alert("Your session has expired. Please login again.");
+  window.location.href = "/login";
 };
 
 const getAuthHeaders = (): Record<string, string> => {
-  const accessToken = localStorage.getItem('auth_token');
+  const accessToken = localStorage.getItem("auth_token");
   if (!accessToken) {
     handleAuthError();
     return {};
@@ -55,53 +27,53 @@ const getAuthHeaders = (): Record<string, string> => {
 
 export const apiML = {
   // Get predictions for a baby
-  getPredictions: (babyId: string) => 
+  getPredictions: (babyId: string) =>
     apiFetch(`/ml/predictions/${babyId}`, {
       headers: getAuthHeaders(),
     }),
 
   // Get a specific prediction
-  getPrediction: (id: string) => 
+  getPrediction: (id: string) =>
     apiFetch(`/ml/prediction/${id}`, {
       headers: getAuthHeaders(),
     }),
 
   // Request a new prediction
-  requestPrediction: (babyId: string, type: MLPrediction['type']) =>
+  requestPrediction: (babyId: string, type: MLPrediction["type"]) =>
     apiFetch(`/ml/predict/${babyId}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
         ...getAuthHeaders(),
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ type }),
     }),
 
   // Get model status
-  getModelStatus: () => 
-    apiFetch('/ml/status', {
+  getModelStatus: () =>
+    apiFetch("/ml/status", {
       headers: getAuthHeaders(),
     }),
 
   // Get model metrics
-  getModelMetrics: () => 
-    apiFetch('/ml/metrics', {
+  getModelMetrics: () =>
+    apiFetch("/ml/metrics", {
       headers: getAuthHeaders(),
     }),
 
   // Get available ML classes
-  getClasses: () => 
-    apiFetch('/ml/classes', {
+  getClasses: () =>
+    apiFetch("/ml/classes", {
       headers: getAuthHeaders(),
     }),
 
   // Analyze a recording
   analyzeRecording: (recordingId: string) =>
     apiFetch(`/ml/analyze/${recordingId}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
         ...getAuthHeaders(),
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     }),
 
@@ -118,4 +90,4 @@ export const apiML = {
     }),
 };
 
-export default apiML; 
+export default apiML;

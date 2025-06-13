@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import { BabyProfile } from '@/types/baby';
-import apiBabies from '@/lib/apiBabies';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { BabyProfile } from "@/types/baby";
+import apiBabies from "@/lib/apiBabies";
 
 interface ApiBabyResponse {
   id: string;
@@ -32,47 +32,51 @@ const BabiesPage = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/auth/login');
+      router.push("/auth/login");
       return;
     }
 
     const fetchBabies = async () => {
       try {
-        console.log('Fetching babies...');
-        const response = await apiBabies.getBabies();
-        console.log('API Response:', response);
-        
+        console.log("Fetching babies...");
+        const response = (await apiBabies.getBabies()) as {
+          success: boolean;
+          data: { babies: unknown[] };
+        };
+        console.log("API Response:", response);
+
         if (response.success && Array.isArray(response.data.babies)) {
-          console.log('Response data is valid array:', response.data);
-          const mappedBabies = response.data.babies.map((baby: ApiBabyResponse) => {
-            console.log('Mapping baby:', baby);
+          console.log("Response data is valid array:", response.data);
+          const mappedBabies = response.data.babies.map((babyData: unknown) => {
+            const baby = babyData as ApiBabyResponse;
+            console.log("Mapping baby:", baby);
             return {
               id: baby.id,
               name: baby.name,
               birthDate: baby.birthDate,
-              gender: baby.gender,
+              gender: baby.gender as "male" | "female",
               weight: {
                 birth: baby.weight,
-                current: baby.weight
+                current: baby.weight,
               },
               height: {
                 birth: baby.height,
-                current: baby.height
+                current: baby.height,
               },
-              notes: baby.notes
+              notes: baby.notes,
             };
           });
-          console.log('Mapped babies:', mappedBabies);
+          console.log("Mapped babies:", mappedBabies);
           setBabies(mappedBabies);
         } else {
-          console.log('Invalid response format:', response);
+          console.log("Invalid response format:", response);
           setBabies([]);
-          setError('Failed to fetch babies');
+          setError("Failed to fetch babies");
         }
       } catch (err) {
-        console.error('Error in fetchBabies:', err);
+        console.error("Error in fetchBabies:", err);
         setBabies([]);
-        setError('An error occurred while fetching babies');
+        setError("An error occurred while fetching babies");
       } finally {
         setIsLoading(false);
       }
@@ -131,32 +135,36 @@ const BabiesPage = () => {
         {/* Sidebar */}
         <div
           className={`absolute right-0 top-16 w-48 bg-white shadow-lg rounded-lg transform transition-all duration-300 ease-in-out z-40
-            ${isSidebarOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}
+            ${
+              isSidebarOpen
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-4 pointer-events-none"
+            }`}
         >
           <div className="p-4">
             <h1 className="text-xl font-bold text-blue-700 mb-4">SuaTalk</h1>
-            
+
             <nav className="space-y-3">
               <button
-                onClick={() => router.push('/home')}
+                onClick={() => router.push("/home")}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Dashboard
               </button>
               <button
-                onClick={() => router.push('/babies')}
+                onClick={() => router.push("/babies")}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Babies
               </button>
               <button
-                onClick={() => router.push('/sound')}
+                onClick={() => router.push("/sound")}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Sound Analysis
               </button>
               <button
-                onClick={() => router.push('/auth/logout')}
+                onClick={() => router.push("/auth/logout")}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout
@@ -171,7 +179,7 @@ const BabiesPage = () => {
             {/* Welcome Header */}
             <header className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900">
-                Welcome back, {userInfo?.firstName || 'User'}!
+                Welcome back, {userInfo?.firstName || "User"}!
               </h1>
               <p className="mt-2 text-gray-600">
                 Manage your baby profiles here.
@@ -188,9 +196,12 @@ const BabiesPage = () => {
               </div>
             ) : !Array.isArray(babies) || babies.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-gray-500 mb-4">No babies data about your babies for now, let's get started by adding your first</div>
-                <button 
-                  onClick={() => router.push('/babies/new')}
+                <div className="text-gray-500 mb-4">
+                  No babies data about your babies for now, let&apos;s get
+                  started by adding your first
+                </div>
+                <button
+                  onClick={() => router.push("/babies/new")}
                   className="text-blue-500 hover:text-blue-600 font-medium"
                 >
                   Create your first baby profile
@@ -199,32 +210,69 @@ const BabiesPage = () => {
             ) : (
               <div className="grid grid-cols-1 gap-6">
                 {babies.map((baby) => (
-                  <Link 
-                    href={`/babies/${baby.id}`} 
+                  <Link
+                    href={`/babies/${baby.id}`}
                     key={baby.id}
                     className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 hover:border-blue-200"
                   >
                     <div className="flex items-center justify-between">
                       <div className="space-y-2">
-                        <h3 className="text-xl font-semibold text-gray-800">{baby.name}</h3>
+                        <h3 className="text-xl font-semibold text-gray-800">
+                          {baby.name}
+                        </h3>
                         <div className="space-y-1">
                           <p className="text-sm text-gray-600 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
                             </svg>
-                            Born: {new Date(baby.birthDate).toLocaleDateString()}
+                            Born:{" "}
+                            {new Date(baby.birthDate).toLocaleDateString()}
                           </p>
                           <p className="text-sm text-gray-600 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                              />
                             </svg>
-                            {baby.gender.charAt(0).toUpperCase() + baby.gender.slice(1)}
+                            {baby.gender.charAt(0).toUpperCase() +
+                              baby.gender.slice(1)}
                           </p>
                         </div>
                       </div>
                       <div className="text-blue-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
                         </svg>
                       </div>
                     </div>

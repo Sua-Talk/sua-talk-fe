@@ -1,34 +1,33 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { BabyProfile } from '@/types/baby';
-import { useAuth } from '@/context/AuthContext';
-import apiBabies from '@/lib/apiBabies';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import apiBabies from "@/lib/apiBabies";
 
 const NewBabyPage = () => {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
-    name: '',
-    birthDate: '',
-    gender: 'female' as const,
+    name: "",
+    birthDate: "",
+    gender: "female" as const,
     weight: {
       birth: 0,
-      current: 0
+      current: 0,
     },
     height: {
       birth: 0,
-      current: 0
+      current: 0,
     },
-    notes: ''
+    notes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/auth/login');
+      router.push("/auth/login");
     }
   }, [isAuthenticated, router]);
 
@@ -36,24 +35,28 @@ const NewBabyPage = () => {
     return null;
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      if (parent === 'weight' || parent === 'height') {
-        setFormData(prev => ({
+
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
+      if (parent === "weight" || parent === "height") {
+        setFormData((prev) => ({
           ...prev,
           [parent]: {
             ...prev[parent],
-            [child]: Number(value)
-          }
+            [child]: Number(value),
+          },
         }));
       }
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -65,27 +68,29 @@ const NewBabyPage = () => {
 
     // Validate weight
     if (formData.weight.birth < 500 || formData.weight.birth > 8000) {
-      setError('Birth weight must be between 500g and 8000g');
+      setError("Birth weight must be between 500g and 8000g");
       setIsSubmitting(false);
       return;
     }
 
     if (formData.weight.current < 500 || formData.weight.current > 8000) {
-      setError('Current weight must be between 500g and 8000g');
+      setError("Current weight must be between 500g and 8000g");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      const response = await apiBabies.createBaby(formData);
+      const response = (await apiBabies.createBaby(formData)) as {
+        success: boolean;
+      };
       if (response.success) {
-        router.push('/babies');
+        router.push("/babies");
       } else {
-        setError('Failed to create baby profile');
+        setError("Failed to create baby profile");
       }
     } catch (err) {
-      setError('An error occurred while creating the baby profile');
-      console.error('Error creating baby:', err);
+      setError("An error occurred while creating the baby profile");
+      console.error("Error creating baby:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -96,15 +101,28 @@ const NewBabyPage = () => {
       <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Header */}
         <header className="flex items-center mb-8">
-          <button 
+          <button
             onClick={() => router.back()}
             className="mr-4 text-gray-600 hover:text-gray-800 transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
-          <div className="text-2xl font-bold text-blue-700">New Baby Profile</div>
+          <div className="text-2xl font-bold text-blue-700">
+            New Baby Profile
+          </div>
         </header>
 
         {/* Form */}
@@ -118,7 +136,7 @@ const NewBabyPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Baby's Name
+                Baby&apos;s Name
               </label>
               <input
                 type="text"
@@ -178,7 +196,9 @@ const NewBabyPage = () => {
                   step="1"
                   placeholder="Enter birth weight (500-8000g)"
                 />
-                <p className="mt-1 text-sm text-gray-500">Must be between 500g and 8000g</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Must be between 500g and 8000g
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -196,7 +216,9 @@ const NewBabyPage = () => {
                   step="1"
                   placeholder="Enter current weight (500-8000g)"
                 />
-                <p className="mt-1 text-sm text-gray-500">Must be between 500g and 8000g</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Must be between 500g and 8000g
+                </p>
               </div>
             </div>
 
@@ -267,7 +289,7 @@ const NewBabyPage = () => {
                     Creating...
                   </div>
                 ) : (
-                  'Create Profile'
+                  "Create Profile"
                 )}
               </button>
             </div>
@@ -278,4 +300,4 @@ const NewBabyPage = () => {
   );
 };
 
-export default NewBabyPage; 
+export default NewBabyPage;

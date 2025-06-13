@@ -1,102 +1,124 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { BabyProfile } from '@/types/baby';
-import { useAuth } from '@/context/AuthContext';
-import apiBabies from '@/lib/apiBabies';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { BabyProfile } from "@/types/baby";
+import { useAuth } from "@/context/AuthContext";
+import apiBabies from "@/lib/apiBabies";
+import { use } from "react";
 
 interface PageParams {
   id: string;
 }
 
-const BabyDetailPage = ({ params }: { params: PageParams }) => {
+const BabyDetailPage = ({ params }: { params: Promise<PageParams> }) => {
+  const resolvedParams = use(params);
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<BabyProfile>({
-    id: '',
-    name: '',
-    birthDate: '',
-    gender: 'female',
+    id: "",
+    name: "",
+    birthDate: "",
+    gender: "female",
     weight: {
       birth: 0,
-      current: 0
+      current: 0,
     },
     height: {
       birth: 0,
-      current: 0
+      current: 0,
     },
-    notes: '',
-    photoUrl: ''
+    notes: "",
+    photoUrl: "",
   });
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/auth/login');
+      router.push("/auth/login");
       return;
     }
 
     const fetchBaby = async () => {
       try {
-        const response = await apiBabies.getBaby(params.id);
+        const response = (await apiBabies.getBaby(resolvedParams.id)) as {
+          success: boolean;
+          data?: {
+            baby?: Record<string, unknown>;
+          };
+        };
         if (response.success && response.data?.baby) {
           // Transform API response to match our frontend type
+          const baby = response.data.baby;
           const babyData = {
-            id: response.data.baby.id,
-            name: response.data.baby.name,
-            birthDate: response.data.baby.birthDate,
-            gender: response.data.baby.gender,
+            id: baby.id as string,
+            name: baby.name as string,
+            birthDate: baby.birthDate as string,
+            gender: baby.gender as "male" | "female",
             weight: {
-              birth: response.data.baby.weight?.birth || 0,
-              current: response.data.baby.weight?.current || 0
+              birth:
+                ((baby.weight as Record<string, unknown>)?.birth as number) ||
+                0,
+              current:
+                ((baby.weight as Record<string, unknown>)?.current as number) ||
+                0,
             },
             height: {
-              birth: response.data.baby.height?.birth || 0,
-              current: response.data.baby.height?.current || 0
+              birth:
+                ((baby.height as Record<string, unknown>)?.birth as number) ||
+                0,
+              current:
+                ((baby.height as Record<string, unknown>)?.current as number) ||
+                0,
             },
-            notes: response.data.baby.notes || '',
-            photoUrl: response.data.baby.profilePicture?.original || ''
+            notes: (baby.notes as string) || "",
+            photoUrl:
+              ((baby.profilePicture as Record<string, unknown>)
+                ?.original as string) || "",
           };
           setFormData(babyData);
         } else {
-          setError('Failed to fetch baby profile');
+          setError("Failed to fetch baby profile");
         }
       } catch (err) {
-        setError('An error occurred while fetching the baby profile');
-        console.error('Error fetching baby:', err);
+        setError("An error occurred while fetching the baby profile");
+        console.error("Error fetching baby:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchBaby();
-  }, [isAuthenticated, router, params.id]);
+  }, [isAuthenticated, router, resolvedParams.id]);
 
   if (!isAuthenticated) {
     return null;
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      if (parent === 'weight' || parent === 'height') {
-        setFormData(prev => ({
+
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
+      if (parent === "weight" || parent === "height") {
+        setFormData((prev) => ({
           ...prev,
           [parent]: {
             ...prev[parent],
-            [child]: Number(value)
-          }
+            [child]: Number(value),
+          },
         }));
       }
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -110,33 +132,37 @@ const BabyDetailPage = ({ params }: { params: PageParams }) => {
       const { birthDate, ...rest } = formData;
       const apiData = {
         ...rest,
-        dateOfBirth: birthDate
+        dateOfBirth: birthDate,
       };
-
-      const response = await apiBabies.updateBaby(params.id, apiData);
+      const response = (await apiBabies.updateBaby(
+        resolvedParams.id,
+        apiData
+      )) as { success: boolean };
       if (response.success) {
         setIsEditing(false);
       } else {
-        setError('Failed to update baby profile');
+        setError("Failed to update baby profile");
       }
     } catch (err) {
-      setError('An error occurred while updating the baby profile');
-      console.error('Error updating baby:', err);
+      setError("An error occurred while updating the baby profile");
+      console.error("Error updating baby:", err);
     }
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this baby profile?')) {
+    if (window.confirm("Are you sure you want to delete this baby profile?")) {
       try {
-        const response = await apiBabies.deleteBaby(params.id);
+        const response = (await apiBabies.deleteBaby(resolvedParams.id)) as {
+          success: boolean;
+        };
         if (response.success) {
-          router.push('/babies');
+          router.push("/babies");
         } else {
-          setError('Failed to delete baby profile');
+          setError("Failed to delete baby profile");
         }
       } catch (err) {
-        setError('An error occurred while deleting the baby profile');
-        console.error('Error deleting baby:', err);
+        setError("An error occurred while deleting the baby profile");
+        console.error("Error deleting baby:", err);
       }
     }
   };
@@ -155,12 +181,23 @@ const BabyDetailPage = ({ params }: { params: PageParams }) => {
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center">
-            <button 
+            <button
               onClick={() => router.back()}
               className="mr-4 text-gray-600 hover:text-gray-800 transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <div className="text-2xl font-bold text-blue-700">Baby Profile</div>
@@ -179,7 +216,7 @@ const BabyDetailPage = ({ params }: { params: PageParams }) => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Baby's Name
+                  Baby&apos;s Name
                 </label>
                 <input
                   type="text"
@@ -324,8 +361,12 @@ const BabyDetailPage = ({ params }: { params: PageParams }) => {
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-700">Birth Date</h3>
-                <p className="mt-1 text-lg">{new Date(formData.birthDate).toLocaleDateString()}</p>
+                <h3 className="text-sm font-medium text-gray-700">
+                  Birth Date
+                </h3>
+                <p className="mt-1 text-lg">
+                  {new Date(formData.birthDate).toLocaleDateString()}
+                </p>
               </div>
 
               <div>
@@ -335,22 +376,30 @@ const BabyDetailPage = ({ params }: { params: PageParams }) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700">Birth Weight</h3>
+                  <h3 className="text-sm font-medium text-gray-700">
+                    Birth Weight
+                  </h3>
                   <p className="mt-1 text-lg">{formData.weight.birth}g</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700">Current Weight</h3>
+                  <h3 className="text-sm font-medium text-gray-700">
+                    Current Weight
+                  </h3>
                   <p className="mt-1 text-lg">{formData.weight.current}g</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700">Birth Height</h3>
+                  <h3 className="text-sm font-medium text-gray-700">
+                    Birth Height
+                  </h3>
                   <p className="mt-1 text-lg">{formData.height.birth}cm</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700">Current Height</h3>
+                  <h3 className="text-sm font-medium text-gray-700">
+                    Current Height
+                  </h3>
                   <p className="mt-1 text-lg">{formData.height.current}cm</p>
                 </div>
               </div>
@@ -358,7 +407,9 @@ const BabyDetailPage = ({ params }: { params: PageParams }) => {
               {formData.notes && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-700">Notes</h3>
-                  <p className="mt-1 text-lg whitespace-pre-wrap">{formData.notes}</p>
+                  <p className="mt-1 text-lg whitespace-pre-wrap">
+                    {formData.notes}
+                  </p>
                 </div>
               )}
 
@@ -367,8 +418,19 @@ const BabyDetailPage = ({ params }: { params: PageParams }) => {
                   onClick={() => setIsEditing(true)}
                   className="flex items-center justify-center flex-1 bg-blue-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
                   </svg>
                   Edit Profile
                 </button>
@@ -376,8 +438,19 @@ const BabyDetailPage = ({ params }: { params: PageParams }) => {
                   onClick={handleDelete}
                   className="flex items-center justify-center flex-1 bg-red-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-600 transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                   Delete Profile
                 </button>
@@ -390,4 +463,4 @@ const BabyDetailPage = ({ params }: { params: PageParams }) => {
   );
 };
 
-export default BabyDetailPage; 
+export default BabyDetailPage;

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import WaveSurferRecorder from '../../components/WaveSurferRecorder';
-import AudioUploader from '../../components/AudioUploader';
-import { useAuth } from '../../context/AuthContext';
-import { apiAudio } from '@/lib/apiAudio';
-import { localStorageUtils, LocalRecording } from '@/lib/localStorage';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import WaveSurferRecorder from "../../components/WaveSurferRecorder";
+import AudioUploader from "../../components/AudioUploader";
+import { useAuth } from "../../context/AuthContext";
+import { apiAudio } from "@/lib/apiAudio";
+import { localStorageUtils, LocalRecording } from "@/lib/localStorage";
 
 interface AudioRecording {
   id: string;
@@ -24,20 +24,10 @@ interface AudioRecording {
   notes: string;
   recordingDate: string;
   uploadedAt: string;
-  analysisStatus: 'pending' | 'processing' | 'completed' | 'failed';
+  analysisStatus: "pending" | "processing" | "completed" | "failed";
   analysisStartedAt: string;
   analysisCompletedAt: string;
   isDeleted: boolean;
-}
-
-interface ApiResponse {
-  success: boolean;
-  data: AudioRecording[];
-  pagination: string;
-  filters: {
-    babyId: string;
-    status: string;
-  };
 }
 
 const SoundPage = () => {
@@ -48,54 +38,66 @@ const SoundPage = () => {
   const [localRecordings, setLocalRecordings] = useState<LocalRecording[]>([]);
   const [isLoadingRecordings, setIsLoadingRecordings] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [userInfo, setUserInfo] = useState<Record<string, unknown> | null>(
+    null
+  );
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/auth/login');
+      router.push("/auth/login");
     } else {
       setIsLoading(false);
+      setUserInfo(getUserInfo() as Record<string, unknown> | null);
       fetchRecordings();
       fetchLocalRecordings();
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, getUserInfo]);
 
   const fetchRecordings = async () => {
     try {
       setIsLoadingRecordings(true);
-      const babyId = localStorage.getItem('selectedBabyId');
+      const babyId = localStorage.getItem("selectedBabyId");
       if (!babyId) {
-        console.warn('No baby selected');
+        console.warn("No baby selected");
         setRecordings([]);
         return;
       }
-
-      const response = await apiAudio.getRecordings();
-      console.log('API Response:', response); // Debug log
+      const response = (await apiAudio.getRecordings()) as Record<
+        string,
+        unknown
+      >;
+      console.log("API Response:", response); // Debug log
 
       // Handle different response formats
-      if (response && typeof response === 'object') {
-        if (response.success && Array.isArray(response.data)) {
-          setRecordings(response.data);
+      if (response && typeof response === "object") {
+        if (
+          (response as { success?: boolean }).success &&
+          Array.isArray((response as { data?: unknown[] }).data)
+        ) {
+          setRecordings((response as { data: AudioRecording[] }).data);
         } else if (Array.isArray(response)) {
           // Handle case where response is directly an array
-          setRecordings(response);
-        } else if (response.data && Array.isArray(response.data)) {
+          setRecordings(response as AudioRecording[]);
+        } else if (
+          (response as { data?: unknown }).data &&
+          Array.isArray((response as { data: unknown[] }).data)
+        ) {
           // Handle case where data is nested but no success flag
-          setRecordings(response.data);
+          setRecordings((response as { data: AudioRecording[] }).data);
         } else {
-          console.error('Unexpected response format:', response);
+          console.error("Unexpected response format:", response);
           setRecordings([]);
         }
       } else {
-        console.error('Invalid response format from API:', {
+        console.error("Invalid response format from API:", {
           response,
           type: typeof response,
-          isArray: Array.isArray(response)
+          isArray: Array.isArray(response),
         });
         setRecordings([]);
       }
     } catch (error) {
-      console.error('Error fetching recordings:', error);
+      console.error("Error fetching recordings:", error);
       setRecordings([]);
     } finally {
       setIsLoadingRecordings(false);
@@ -117,20 +119,18 @@ const SoundPage = () => {
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
-
-  const userInfo = getUserInfo();
 
   if (isLoading) {
     return (
@@ -187,32 +187,36 @@ const SoundPage = () => {
         {/* Sidebar */}
         <div
           className={`absolute right-0 top-16 w-48 bg-white shadow-lg rounded-lg transform transition-all duration-300 ease-in-out z-40
-            ${isSidebarOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}
+            ${
+              isSidebarOpen
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-4 pointer-events-none"
+            }`}
         >
           <div className="p-4">
             <h1 className="text-xl font-bold text-blue-700 mb-4">SuaTalk</h1>
-            
+
             <nav className="space-y-3">
               <button
-                onClick={() => router.push('/home')}
+                onClick={() => router.push("/home")}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Dashboard
               </button>
               <button
-                onClick={() => router.push('/babies')}
+                onClick={() => router.push("/babies")}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Babies
               </button>
               <button
-                onClick={() => router.push('/sound')}
+                onClick={() => router.push("/sound")}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Sound Analysis
               </button>
               <button
-                onClick={() => router.push('/auth/logout')}
+                onClick={() => router.push("/auth/logout")}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout
@@ -227,21 +231,25 @@ const SoundPage = () => {
             {/* Welcome Header */}
             <header className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900">
-                Welcome back, {userInfo?.firstName || 'User'}!
+                Welcome back, {(userInfo?.firstName as string) || "User"}!
               </h1>
               <p className="mt-2 text-gray-600">
-                Record and analyze your baby's sounds.
+                Record and analyze your baby&apos;s sounds.
               </p>
             </header>
 
             {/* Voice Recorder Section */}
             <section id="recorder-section" className="mb-8">
               <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-2">Rekam Audio Langsung</h2>
-                <p className="text-sm text-gray-600">Rekam tangisan bayi secara langsung untuk dianalisis</p>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">
+                  Rekam Audio Langsung
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Rekam tangisan bayi secara langsung untuk dianalisis
+                </p>
               </div>
-              <WaveSurferRecorder 
-                onRecordingUploaded={fetchRecordings} 
+              <WaveSurferRecorder
+                onRecordingUploaded={fetchRecordings}
                 onLocalSave={handleLocalSave}
               />
             </section>
@@ -258,11 +266,15 @@ const SoundPage = () => {
             {/* Audio Upload Section */}
             <section id="upload-section" className="mb-8">
               <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-2">Unggah Audio</h2>
-                <p className="text-sm text-gray-600">Pilih file audio untuk menganalisis jenis tangisan bayi</p>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">
+                  Unggah Audio
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Pilih file audio untuk menganalisis jenis tangisan bayi
+                </p>
               </div>
-              <AudioUploader 
-                onUploadComplete={fetchRecordings} 
+              <AudioUploader
+                onUploadComplete={fetchRecordings}
                 onLocalSave={handleLocalSave}
               />
             </section>
@@ -270,8 +282,12 @@ const SoundPage = () => {
             {/* Recordings List Section */}
             <section>
               <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-2">Rekaman Tersimpan</h2>
-                <p className="text-sm text-gray-600">Daftar rekaman audio yang telah diunggah</p>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">
+                  Rekaman Tersimpan
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Daftar rekaman audio yang telah diunggah
+                </p>
               </div>
 
               {isLoadingRecordings ? (
@@ -281,22 +297,44 @@ const SoundPage = () => {
               ) : recordings.length === 0 && localRecordings.length === 0 ? (
                 <div className="text-center py-8 bg-white rounded-lg shadow-sm border border-gray-200">
                   <div className="max-w-md mx-auto">
-                    <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    <svg
+                      className="w-16 h-16 text-gray-400 mx-auto mb-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                      />
                     </svg>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Belum Ada Rekaman</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Belum Ada Rekaman
+                    </h3>
                     <p className="text-gray-600 mb-4">
-                      Anda belum memiliki rekaman audio. Mulai rekam audio bayi Anda menggunakan perekam suara di atas atau unggah file audio yang sudah ada.
+                      Anda belum memiliki rekaman audio. Mulai rekam audio bayi
+                      Anda menggunakan perekam suara di atas atau unggah file
+                      audio yang sudah ada.
                     </p>
                     <div className="flex justify-center space-x-4">
                       <button
-                        onClick={() => document.querySelector('#recorder-section')?.scrollIntoView({ behavior: 'smooth' })}
+                        onClick={() =>
+                          document
+                            .querySelector("#recorder-section")
+                            ?.scrollIntoView({ behavior: "smooth" })
+                        }
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
                       >
                         Rekam Audio
                       </button>
                       <button
-                        onClick={() => document.querySelector('#upload-section')?.scrollIntoView({ behavior: 'smooth' })}
+                        onClick={() =>
+                          document
+                            .querySelector("#upload-section")
+                            ?.scrollIntoView({ behavior: "smooth" })
+                        }
                         className="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-colors"
                       >
                         Unggah Audio
@@ -309,47 +347,74 @@ const SoundPage = () => {
                   {/* Server Recordings */}
                   {recordings.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Rekaman Server</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Rekaman Server
+                      </h3>
                       <div className="space-y-4">
                         {recordings.map((recording) => (
-                          <div key={recording.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                          <div
+                            key={recording.id}
+                            className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                          >
                             <div className="flex flex-col space-y-3">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <h3 className="font-medium text-gray-800">{recording.title}</h3>
+                                  <h3 className="font-medium text-gray-800">
+                                    {recording.title}
+                                  </h3>
                                   <p className="text-sm text-gray-600">
-                                    {new Date(recording.recordingDate).toLocaleDateString('id-ID', {
-                                      day: 'numeric',
-                                      month: 'long',
-                                      year: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
+                                    {new Date(
+                                      recording.recordingDate
+                                    ).toLocaleDateString("id-ID", {
+                                      day: "numeric",
+                                      month: "long",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
                                     })}
                                   </p>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    recording.analysisStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                                    recording.analysisStatus === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                                    recording.analysisStatus === 'failed' ? 'bg-red-100 text-red-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {recording.analysisStatus === 'completed' ? 'Selesai' :
-                                     recording.analysisStatus === 'processing' ? 'Diproses' :
-                                     recording.analysisStatus === 'failed' ? 'Gagal' :
-                                     'Menunggu'}
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      recording.analysisStatus === "completed"
+                                        ? "bg-green-100 text-green-800"
+                                        : recording.analysisStatus ===
+                                          "processing"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : recording.analysisStatus === "failed"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    {recording.analysisStatus === "completed"
+                                      ? "Selesai"
+                                      : recording.analysisStatus ===
+                                        "processing"
+                                      ? "Diproses"
+                                      : recording.analysisStatus === "failed"
+                                      ? "Gagal"
+                                      : "Menunggu"}
                                   </span>
                                 </div>
                               </div>
 
                               <div className="flex items-center space-x-4 text-sm text-gray-600">
-                                <span>Durasi: {formatDuration(recording.duration)}</span>
-                                <span>Ukuran: {formatFileSize(recording.fileSize)}</span>
-                                <span>Format: {recording.format.toUpperCase()}</span>
+                                <span>
+                                  Durasi: {formatDuration(recording.duration)}
+                                </span>
+                                <span>
+                                  Ukuran: {formatFileSize(recording.fileSize)}
+                                </span>
+                                <span>
+                                  Format: {recording.format.toUpperCase()}
+                                </span>
                               </div>
 
                               {recording.notes && (
-                                <p className="text-sm text-gray-600 italic">"{recording.notes}"</p>
+                                <p className="text-sm text-gray-600 italic">
+                                  &quot;{recording.notes}&quot;
+                                </p>
                               )}
 
                               <div className="flex items-center space-x-2">
@@ -359,11 +424,17 @@ const SoundPage = () => {
                                   className="w-full"
                                 />
                                 <button
-                                  onClick={() => apiAudio.analyzeRecording(recording.id)}
-                                  disabled={recording.analysisStatus === 'processing'}
+                                  onClick={() =>
+                                    apiAudio.analyzeRecording(recording.id)
+                                  }
+                                  disabled={
+                                    recording.analysisStatus === "processing"
+                                  }
                                   className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  {recording.analysisStatus === 'processing' ? 'Menganalisis...' : 'Analisis'}
+                                  {recording.analysisStatus === "processing"
+                                    ? "Menganalisis..."
+                                    : "Analisis"}
                                 </button>
                               </div>
                             </div>
@@ -376,35 +447,52 @@ const SoundPage = () => {
                   {/* Local Recordings */}
                   {localRecordings.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Rekaman Lokal</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Rekaman Lokal
+                      </h3>
                       <div className="space-y-4">
                         {localRecordings.map((recording) => (
-                          <div key={recording.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                          <div
+                            key={recording.id}
+                            className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                          >
                             <div className="flex flex-col space-y-3">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <h3 className="font-medium text-gray-800">{recording.title}</h3>
+                                  <h3 className="font-medium text-gray-800">
+                                    {recording.title}
+                                  </h3>
                                   <p className="text-sm text-gray-600">
-                                    {new Date(recording.recordingDate).toLocaleDateString('id-ID', {
-                                      day: 'numeric',
-                                      month: 'long',
-                                      year: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
+                                    {new Date(
+                                      recording.recordingDate
+                                    ).toLocaleDateString("id-ID", {
+                                      day: "numeric",
+                                      month: "long",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
                                     })}
                                   </p>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    {recording.source === 'upload' ? 'Unggahan' : 'Rekaman'}
+                                    {recording.source === "upload"
+                                      ? "Unggahan"
+                                      : "Rekaman"}
                                   </span>
                                 </div>
                               </div>
 
                               <div className="flex items-center space-x-4 text-sm text-gray-600">
-                                <span>Durasi: {formatDuration(recording.duration)}</span>
-                                <span>Ukuran: {formatFileSize(recording.fileSize)}</span>
-                                <span>Format: {recording.format.toUpperCase()}</span>
+                                <span>
+                                  Durasi: {formatDuration(recording.duration)}
+                                </span>
+                                <span>
+                                  Ukuran: {formatFileSize(recording.fileSize)}
+                                </span>
+                                <span>
+                                  Format: {recording.format.toUpperCase()}
+                                </span>
                               </div>
 
                               <div className="flex items-center space-x-2">
@@ -414,13 +502,17 @@ const SoundPage = () => {
                                   className="w-full"
                                 />
                                 <button
-                                  onClick={() => router.push(`/analyse?id=${recording.id}`)}
+                                  onClick={() =>
+                                    router.push(`/analyse?id=${recording.id}`)
+                                  }
                                   className="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
                                 >
                                   Analisis
                                 </button>
                                 <button
-                                  onClick={() => deleteLocalRecording(recording.id)}
+                                  onClick={() =>
+                                    deleteLocalRecording(recording.id)
+                                  }
                                   className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition-colors"
                                 >
                                   Hapus

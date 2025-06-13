@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { BabyProfile } from '@/types/baby';
-import apiBabies from '@/lib/apiBabies';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { BabyProfile } from "@/types/baby";
+import apiBabies from "@/lib/apiBabies";
 
 const HomePage = () => {
   const router = useRouter();
@@ -19,48 +19,64 @@ const HomePage = () => {
     if (authLoading) return; // Wait for auth check to complete
 
     if (!isAuthenticated) {
-      router.push('/auth/login');
+      router.push("/auth/login");
       return;
     }
 
     const fetchBabies = async () => {
       try {
-        const response = await apiBabies.getBabies();
+        const response = (await apiBabies.getBabies()) as {
+          success: boolean;
+          data: { babies: unknown[] };
+        };
         if (response.success && Array.isArray(response.data.babies)) {
-          const mappedBabies = response.data.babies.map((baby: any) => ({
-            id: baby.id,
-            name: baby.name,
-            birthDate: baby.birthDate,
-            gender: baby.gender,
-            weight: {
-              birth: baby.weight?.birth || 0,
-              current: baby.weight?.current || 0
-            },
-            height: {
-              birth: baby.height?.birth || 0,
-              current: baby.height?.current || 0
-            },
-            notes: baby.notes || '',
-            photoUrl: baby.profilePicture?.original || ''
-          }));
+          const mappedBabies = response.data.babies.map((baby: unknown) => {
+            const babyObj = baby as Record<string, unknown>;
+            return {
+              id: babyObj.id as string,
+              name: babyObj.name as string,
+              birthDate: babyObj.birthDate as string,
+              gender: babyObj.gender as "male" | "female",
+              weight: {
+                birth:
+                  ((babyObj.weight as Record<string, unknown>)
+                    ?.birth as number) || 0,
+                current:
+                  ((babyObj.weight as Record<string, unknown>)
+                    ?.current as number) || 0,
+              },
+              height: {
+                birth:
+                  ((babyObj.height as Record<string, unknown>)
+                    ?.birth as number) || 0,
+                current:
+                  ((babyObj.height as Record<string, unknown>)
+                    ?.current as number) || 0,
+              },
+              notes: (babyObj.notes as string) || "",
+              photoUrl:
+                ((babyObj.profilePicture as Record<string, unknown>)
+                  ?.original as string) || "",
+            };
+          });
           setBabies(mappedBabies);
 
           // Get selected baby from localStorage or use first baby
-          const storedBabyId = localStorage.getItem('selectedBabyId');
-          const babyToSelect = storedBabyId 
+          const storedBabyId = localStorage.getItem("selectedBabyId");
+          const babyToSelect = storedBabyId
             ? mappedBabies.find((b: BabyProfile) => b.id === storedBabyId)
             : mappedBabies[0];
-          
+
           if (babyToSelect) {
             setSelectedBaby(babyToSelect);
-            localStorage.setItem('selectedBabyId', babyToSelect.id);
+            localStorage.setItem("selectedBabyId", babyToSelect.id);
           }
         } else {
-          setError('Failed to fetch babies');
+          setError("Failed to fetch babies");
         }
       } catch (err) {
-        setError('An error occurred while fetching babies');
-        console.error('Error fetching babies:', err);
+        setError("An error occurred while fetching babies");
+        console.error("Error fetching babies:", err);
       } finally {
         setIsLoading(false);
       }
@@ -71,7 +87,7 @@ const HomePage = () => {
 
   const handleBabySelect = (baby: BabyProfile) => {
     setSelectedBaby(baby);
-    localStorage.setItem('selectedBabyId', baby.id);
+    localStorage.setItem("selectedBabyId", baby.id);
   };
 
   // Show loading state while checking authentication
@@ -134,32 +150,36 @@ const HomePage = () => {
         {/* Sidebar */}
         <div
           className={`absolute right-0 top-16 w-48 bg-white shadow-lg rounded-lg transform transition-all duration-300 ease-in-out z-40
-            ${isSidebarOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}
+            ${
+              isSidebarOpen
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-4 pointer-events-none"
+            }`}
         >
           <div className="p-4">
             <h1 className="text-xl font-bold text-blue-700 mb-4">SuaTalk</h1>
-            
+
             <nav className="space-y-3">
               <button
-                onClick={() => router.push('/home')}
+                onClick={() => router.push("/home")}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Dashboard
               </button>
               <button
-                onClick={() => router.push('/babies')}
+                onClick={() => router.push("/babies")}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Babies
               </button>
               <button
-                onClick={() => router.push('/sound')}
+                onClick={() => router.push("/sound")}
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Sound Analysis
               </button>
               <button
-                onClick={() => router.push('/auth/logout')}
+                onClick={() => router.push("/auth/logout")}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout
@@ -174,24 +194,37 @@ const HomePage = () => {
             {/* Welcome Header */}
             <header className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900">
-                Welcome back, {userInfo?.firstName || 'User'}!
+                Welcome back, {userInfo?.firstName || "User"}!
               </h1>
               <p className="mt-2 text-gray-600">
-                Track and monitor your baby's development with ease.
+                Track and monitor your baby&apos;s development with ease.
               </p>
             </header>
 
             {/* Baby Data Section */}
             <section className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold text-gray-900">Baby Data</h2>
+                <h2 className="text-2xl font-semibold text-gray-900">
+                  Baby Data
+                </h2>
                 <button
-                  onClick={() => router.push('/babies')}
+                  onClick={() => router.push("/babies")}
                   className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
                 >
                   View All Babies
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
               </div>
@@ -208,7 +241,7 @@ const HomePage = () => {
                 <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
                   <p className="text-gray-500 mb-4">No babies added yet</p>
                   <button
-                    onClick={() => router.push('/babies/new')}
+                    onClick={() => router.push("/babies/new")}
                     className="text-blue-600 hover:text-blue-700 font-medium"
                   >
                     Add your first baby
@@ -224,8 +257,8 @@ const HomePage = () => {
                         onClick={() => handleBabySelect(baby)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
                           selectedBaby?.id === baby.id
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
                         {baby.name}
@@ -238,20 +271,36 @@ const HomePage = () => {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Name</h3>
+                          <h3 className="text-sm font-medium text-gray-700">
+                            Name
+                          </h3>
                           <p className="mt-1 text-lg">{selectedBaby.name}</p>
                         </div>
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Birth Date</h3>
-                          <p className="mt-1 text-lg">{new Date(selectedBaby.birthDate).toLocaleDateString()}</p>
+                          <h3 className="text-sm font-medium text-gray-700">
+                            Birth Date
+                          </h3>
+                          <p className="mt-1 text-lg">
+                            {new Date(
+                              selectedBaby.birthDate
+                            ).toLocaleDateString()}
+                          </p>
                         </div>
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Gender</h3>
-                          <p className="mt-1 text-lg capitalize">{selectedBaby.gender}</p>
+                          <h3 className="text-sm font-medium text-gray-700">
+                            Gender
+                          </h3>
+                          <p className="mt-1 text-lg capitalize">
+                            {selectedBaby.gender}
+                          </p>
                         </div>
                         <div>
-                          <h3 className="text-sm font-medium text-gray-700">Current Weight</h3>
-                          <p className="mt-1 text-lg">{selectedBaby.weight.current}g</p>
+                          <h3 className="text-sm font-medium text-gray-700">
+                            Current Weight
+                          </h3>
+                          <p className="mt-1 text-lg">
+                            {selectedBaby.weight.current}g
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -262,17 +311,31 @@ const HomePage = () => {
 
             {/* Audio Upload Section */}
             <section>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Upload Audio</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                Upload Audio
+              </h2>
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <p className="text-gray-600 mb-4">
-                  Record and analyze your baby's sounds to track their development.
+                  Record and analyze your baby&apos;s sounds to track their
+                  development.
                 </p>
                 <button
-                  onClick={() => router.push('/sound')}
+                  onClick={() => router.push("/sound")}
                   className="bg-blue-500 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center gap-2"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
                   </svg>
                   Start Recording
                 </button>

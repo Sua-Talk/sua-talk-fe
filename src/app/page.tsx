@@ -1,16 +1,18 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import SuaTalk from './suaTalk';
-import SideBar from '../components/sideBar';
-import apiAuth  from '../lib/apiAuth';
+import React, { useEffect } from "react";
+import SuaTalk from "./suaTalk";
+import apiAuth from "../lib/apiAuth";
 
 export default function Home() {
-  { /* One time check for API health */}
+  {
+    /* One time check for API health */
+  }
   useEffect(() => {
-    apiAuth.health()
-      .then((result) => console.log('API Health:', result))
-      .catch((err) => console.error('API Health Error:', err));
+    apiAuth
+      .health()
+      .then((result) => console.log("API Health:", result))
+      .catch((err) => console.error("API Health Error:", err));
   }, []);
 
   return (
@@ -18,8 +20,7 @@ export default function Home() {
       {/* Debug overlay - only visible on larger screens */}
       <div className="hidden sm:block fixed inset-0 bg-gray-100 z-0">
         <div className="flex justify-center h-full">
-          <div className="w-full max-w-sm border-4 border-red-500 relative">
-          </div>
+          <div className="w-full max-w-sm border-4 border-red-500 relative"></div>
         </div>
       </div>
 

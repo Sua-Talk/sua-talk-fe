@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import apiAuth from '@/lib/apiAuth';
-import { useAuth } from '@/context/AuthContext';
+import React, { useState, useRef, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import apiAuth from "@/lib/apiAuth";
+import { useAuth } from "@/context/AuthContext";
 
 const VerifyEmailPage = () => {
   const router = useRouter();
   const { register } = useAuth();
   const searchParams = useSearchParams();
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const email = searchParams.get('email') || '';
-  const password = searchParams.get('password') || '';
-  const firstName = searchParams.get('firstName') || '';
-  const lastName = searchParams.get('lastName') || '';
+  const email = searchParams.get("email") || "";
+  const password = searchParams.get("password") || "";
+  const firstName = searchParams.get("firstName") || "";
+  const lastName = searchParams.get("lastName") || "";
 
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, 6);
@@ -30,39 +30,50 @@ const VerifyEmailPage = () => {
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const code = otp.join('');
+    const code = otp.join("");
     try {
       // First verify the email with OTP
-      const verifyResponse = await apiAuth.confirmEmail(email, code);
+      const verifyResponse = (await apiAuth.confirmEmail(email, code)) as {
+        success: boolean;
+      };
       if (!verifyResponse.success) {
-        throw new Error('Email verification failed');
+        throw new Error("Email verification failed");
       }
 
       // Then complete the registration using AuthContext
       await register(email, password, firstName, lastName);
-      router.push('/sound');
-    } catch (error: any) {
-      alert(error?.message || 'Verification or registration failed');
+      router.push("/sound");
+    } catch (error: unknown) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Verification or registration failed"
+      );
     }
   };
 
   const handleResendVerification = async () => {
     try {
-      const response = await apiAuth.resendVerification(email);
+      const response = (await apiAuth.resendVerification(email)) as {
+        success: boolean;
+      };
       if (!response.success) {
-        throw new Error('Resend verification failed');
+        throw new Error("Resend verification failed");
       }
-      alert('Verification email resent');
-    } catch (error: any) {
-      alert(error?.message || 'Resend failed');
+      alert("Verification email resent");
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : "Resend failed");
     }
   };
 
@@ -74,7 +85,7 @@ const VerifyEmailPage = () => {
             Verify your email
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            We've sent a verification code to your email
+            We&apos;ve sent a verification code to your email
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -82,12 +93,14 @@ const VerifyEmailPage = () => {
             {otp.map((digit, index) => (
               <input
                 key={index}
-                ref={el => { inputRefs.current[index] = el; }}
+                ref={(el) => {
+                  inputRefs.current[index] = el;
+                }}
                 type="text"
                 maxLength={1}
                 value={digit}
-                onChange={e => handleChange(index, e.target.value)}
-                onKeyDown={e => handleKeyDown(index, e)}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
                 className="w-12 h-12 text-center text-xl border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             ))}
@@ -106,7 +119,7 @@ const VerifyEmailPage = () => {
             onClick={handleResendVerification}
             className="text-sm text-blue-600 hover:text-blue-500"
           >
-            Didn't receive the code? Resend verification
+            Didn&apos;t receive the code? Resend verification
           </button>
         </div>
       </div>
@@ -114,4 +127,4 @@ const VerifyEmailPage = () => {
   );
 };
 
-export default VerifyEmailPage; 
+export default VerifyEmailPage;

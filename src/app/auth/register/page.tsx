@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import apiAuth from '@/lib/apiAuth';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import apiAuth from "@/lib/apiAuth";
 
 const RegisterPage = () => {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   const validateEmail = (email: string): boolean => {
@@ -21,24 +21,30 @@ const RegisterPage = () => {
     return emailRegex.test(email);
   };
 
-  const validatePassword = (password: string): { isValid: boolean; message: string } => {
+  const validatePassword = (
+    password: string
+  ): { isValid: boolean; message: string } => {
     if (password.length < 8) {
-      return { isValid: false, message: 'Password must be at least 8 characters long' };
+      return {
+        isValid: false,
+        message: "Password must be at least 8 characters long",
+      };
     }
-    
+
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
     const hasSpecialChar = /[@$!%*?&]/.test(password);
 
     if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
-      return { 
-        isValid: false, 
-        message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)' 
+      return {
+        isValid: false,
+        message:
+          "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)",
       };
     }
 
-    return { isValid: true, message: '' };
+    return { isValid: true, message: "" };
   };
 
   const validateName = (name: string): boolean => {
@@ -47,22 +53,22 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setSuccess(false);
 
     // Validate email
     if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       return;
     }
 
     // Validate names
     if (!validateName(firstName)) {
-      setError('First name must be at least 2 characters long');
+      setError("First name must be at least 2 characters long");
       return;
     }
     if (!validateName(lastName)) {
-      setError('Last name must be at least 2 characters long');
+      setError("Last name must be at least 2 characters long");
       return;
     }
 
@@ -75,28 +81,37 @@ const RegisterPage = () => {
 
     // Check if passwords match
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
-
     setLoading(true);
     try {
-      const response = await apiAuth.checkEmail(email);
+      const response = (await apiAuth.checkEmail(email)) as {
+        success: boolean;
+      };
       if (response.success === true) {
-        router.push(`/auth/register/verify-email?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}`);
+        router.push(
+          `/auth/register/verify-email?email=${encodeURIComponent(
+            email
+          )}&password=${encodeURIComponent(
+            password
+          )}&firstName=${encodeURIComponent(
+            firstName
+          )}&lastName=${encodeURIComponent(lastName)}`
+        );
       } else {
-        setError('Email already exists');
+        setError("Email already exists");
         console.log(response);
       }
-    } catch (error: any) {
-      setError(error?.message || 'Registration failed');
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Registration failed");
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignup = () => {
-    window.location.href = '/auth/google-signin';
+    window.location.href = "/auth/google-signin";
   };
 
   return (
@@ -107,8 +122,11 @@ const RegisterPage = () => {
             Create your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
+            Or{" "}
+            <Link
+              href="/auth/login"
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
               sign in to your account
             </Link>
           </p>
@@ -212,7 +230,9 @@ const RegisterPage = () => {
               <div className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+              <span className="px-2 bg-gray-50 text-gray-500">
+                Or continue with
+              </span>
             </div>
           </div>
           <div className="mt-6">
@@ -229,8 +249,14 @@ const RegisterPage = () => {
             </button>
           </div>
         </div>
-        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-        {success && <div className="text-green-500 text-sm text-center">Registration successful! Check your email.</div>}
+        {error && (
+          <div className="text-red-500 text-sm text-center">{error}</div>
+        )}
+        {success && (
+          <div className="text-green-500 text-sm text-center">
+            Registration successful! Check your email.
+          </div>
+        )}
       </div>
     </div>
   );
