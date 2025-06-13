@@ -8,7 +8,7 @@ import apiBabies from "@/lib/apiBabies";
 
 const HomePage = () => {
   const router = useRouter();
-  const { isAuthenticated, getUserInfo, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, getUserInfo, isLoading: authLoading, logout } = useAuth();
   const [selectedBaby, setSelectedBaby] = useState<BabyProfile | null>(null);
   const [babies, setBabies] = useState<BabyProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,10 +59,8 @@ const HomePage = () => {
                   ?.original as string) || "",
             };
           });
-          setBabies(mappedBabies);
-
-          // Get selected baby from localStorage or use first baby
-          const storedBabyId = localStorage.getItem("selectedBabyId");
+          setBabies(mappedBabies);          // Get selected baby from localStorage or use first baby
+          const storedBabyId = localStorage.getItem('selectedBabyId');
           const babyToSelect = storedBabyId
             ? mappedBabies.find((b: BabyProfile) => b.id === storedBabyId)
             : mappedBabies[0];
@@ -177,9 +175,8 @@ const HomePage = () => {
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Sound Analysis
-              </button>
-              <button
-                onClick={() => router.push("/auth/logout")}
+              </button>              <button
+                onClick={logout}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout

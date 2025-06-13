@@ -24,7 +24,7 @@ interface ApiBabyResponse {
 
 const BabiesPage = () => {
   const router = useRouter();
-  const { isAuthenticated, getUserInfo } = useAuth();
+  const { isAuthenticated, getUserInfo, logout } = useAuth();
   const [babies, setBabies] = useState<BabyProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,16 +34,10 @@ const BabiesPage = () => {
     if (!isAuthenticated) {
       router.push("/auth/login");
       return;
-    }
-
-    const fetchBabies = async () => {
-      try {
-        console.log("Fetching babies...");
-        const response = (await apiBabies.getBabies()) as {
-          success: boolean;
-          data: { babies: unknown[] };
-        };
-        console.log("API Response:", response);
+    }    const fetchBabies = async () => {
+      try {        console.log('Fetching babies...');
+        const response = await apiBabies.getBabies() as { success: boolean; data: { babies: BabyProfile[] } };
+        console.log('API Response:', response);
 
         if (response.success && Array.isArray(response.data.babies)) {
           console.log("Response data is valid array:", response.data);
@@ -162,9 +156,8 @@ const BabiesPage = () => {
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Sound Analysis
-              </button>
-              <button
-                onClick={() => router.push("/auth/logout")}
+              </button>              <button
+                onClick={logout}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout
@@ -194,14 +187,10 @@ const BabiesPage = () => {
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
                 {error}
               </div>
-            ) : !Array.isArray(babies) || babies.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-500 mb-4">
-                  No babies data about your babies for now, let&apos;s get
-                  started by adding your first
-                </div>
+            ) : !Array.isArray(babies) || babies.length === 0 ? (              <div className="text-center py-12">
+                <div className="text-gray-500 mb-4">No babies data about your babies for now, let&apos;s get started by adding your first</div>
                 <button
-                  onClick={() => router.push("/babies/new")}
+                  onClick={() => router.push('/babies/new')}
                   className="text-blue-500 hover:text-blue-600 font-medium"
                 >
                   Create your first baby profile

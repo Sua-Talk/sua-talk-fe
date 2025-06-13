@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 const SuaTalk = () => {
   const featuresRef = useRef<HTMLDivElement>(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -19,7 +19,6 @@ const SuaTalk = () => {
       router.push("/auth/login");
     }
   };
-
   return (
     <div className="min-h-screen bg-white sm:bg-transparent sm:flex sm:justify-center relative z-10">
       <div className="w-full sm:w-full sm:max-w-sm sm:bg-white min-h-screen">
@@ -85,9 +84,8 @@ const SuaTalk = () => {
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Sound Analysis
-              </button>
-              <button
-                onClick={() => router.push("/auth/logout")}
+              </button>              <button
+                onClick={logout}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout

@@ -146,7 +146,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
   };
-
   const logout = () => {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("refresh_token");
@@ -154,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("user_info");
     localStorage.removeItem("token_expiration");
     setIsAuthenticated(false);
-    router.push("/auth/login");
+    router.push('/');
   };
 
   const register = async (

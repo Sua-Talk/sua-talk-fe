@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import WaveSurferRecorder from "../../components/WaveSurferRecorder";
-import AudioUploader from "../../components/AudioUploader";
-import { useAuth } from "../../context/AuthContext";
-import { apiAudio } from "@/lib/apiAudio";
-import { localStorageUtils, LocalRecording } from "@/lib/localStorage";
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import WaveSurferRecorder from '../../components/WaveSurferRecorder';
+import AudioUploader from '../../components/AudioUploader';
+import { useAuth} from '../../context/AuthContext';
+import { apiAudio } from '@/lib/apiAudio';
+import { localStorageUtils, LocalRecording } from '@/lib/localStorage';
 
 interface AudioRecording {
   id: string;
@@ -31,7 +31,7 @@ interface AudioRecording {
 }
 
 const SoundPage = () => {
-  const { isAuthenticated, getUserInfo } = useAuth();
+  const { isAuthenticated, getUserInfo, logout } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [recordings, setRecordings] = useState<AudioRecording[]>([]);
@@ -214,9 +214,8 @@ const SoundPage = () => {
                 className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
               >
                 Sound Analysis
-              </button>
-              <button
-                onClick={() => router.push("/auth/logout")}
+              </button>              <button
+                onClick={logout}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout
