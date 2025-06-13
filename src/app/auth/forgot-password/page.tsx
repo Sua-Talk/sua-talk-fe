@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import apiAuth from '@/lib/apiAuth';
 import SideBar from '@/components/sideBar';
 import Link from 'next/link';
 
 const ForgotPasswordPage = () => {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,8 +19,16 @@ const ForgotPasswordPage = () => {
     setSuccess(false);
     setLoading(true);
     try {
-      await apiAuth.forgotPassword(email);
-      setSuccess(true);
+      const response = await apiAuth.forgotPassword(email);
+      if (response.success) {
+        setSuccess(true);
+        // Redirect to change password page after 2 seconds
+        setTimeout(() => {
+          router.push(`/auth/forgot-password/verify-email?email=${encodeURIComponent(email)}`);
+        }, 2000);
+      } else {
+        setError(response.message || 'Failed to send reset email');
+      }
     } catch (error: any) {
       setError(error?.message || 'Failed to send reset email');
     } finally {
@@ -53,7 +63,20 @@ const ForgotPasswordPage = () => {
             </button>
           </form>
           {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-          {success && <div className="text-green-500 text-sm text-center">Reset link sent! Check your email.</div>}
+          {success && (
+            <div className="rounded-md bg-green-50 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-green-800">Reset link sent! Redirecting to change password...</p>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="text-center mt-4">
             <Link href="/auth/login" className="text-blue-600 hover:text-blue-800 text-sm">
               Back to Login
