@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { apiAudio } from '@/lib/apiAudio';
+import { localStorageUtils, LocalRecording } from '@/lib/localStorage';
+import { v4 as uuidv4 } from 'uuid';
 
 // Icons
 const UploadIcon = () => (
@@ -26,7 +29,20 @@ const TrashIcon = () => (
   </svg>
 );
 
-const AudioUploader: React.FC = () => {
+const DownloadIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7,10 12,15 17,10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+);
+
+interface AudioUploaderProps {
+  onUploadComplete?: () => void;
+  onLocalSave?: () => void;
+}
+
+const AudioUploader: React.FC<AudioUploaderProps> = ({ onUploadComplete, onLocalSave }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -109,16 +125,58 @@ const AudioUploader: React.FC = () => {
     }
   };
 
-  const analyzeAudio = () => {
+  const analyzeAudio = async () => {
     if (!selectedFile) return;
 
     setIsAnalyzing(true);
-    
-    // Simulate analysis
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const babyId = localStorage.getItem('selectedBabyId');
+      if (!babyId) {
+        throw new Error('No baby selected');
+      }
+
+      await apiAudio.uploadAudio({
+        babyId,
+        title: selectedFile.name,
+        recordingDate: new Date().toISOString(),
+        audioFile: selectedFile
+      });
+      
+      // Call the callback to refresh recordings
+      onUploadComplete?.();
+      
+      alert('Upload berhasil!');
+    } catch (error) {
+      console.error('Error uploading audio:', error);
+      if (error instanceof Error) {
+        setError(`Terjadi kesalahan saat mengupload audio: ${error}`);
+      } else {
+        setError('Terjadi kesalahan saat mengupload audio');
+      }
+    } finally {
       setIsAnalyzing(false);
-      alert('Analisis selesai! Hasil: Tangisan menunjukkan bayi lapar. Coba beri makan atau ASI.');
-    }, 3000);
+    }
+  };
+
+  const saveLocally = () => {
+    if (!selectedFile || !audioUrl) return;
+
+    const localRecording: LocalRecording = {
+      id: uuidv4(),
+      title: selectedFile.name,
+      fileUrl: audioUrl,
+      fileSize: selectedFile.size,
+      duration: 0, // You might want to get actual duration
+      format: selectedFile.type.split('/')[1],
+      recordingDate: new Date().toISOString(),
+      source: 'upload'
+    };
+
+    localStorageUtils.saveRecording(localRecording);
+    onLocalSave?.();
+    alert('Audio berhasil disimpan secara lokal!');
   };
 
   return (
@@ -194,7 +252,14 @@ const AudioUploader: React.FC = () => {
                 className="flex items-center space-x-2 px-4 py-2 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <AnalyzeIcon />
-                <span>{isAnalyzing ? 'Menganalisis...' : 'Analisis Tangisan'}</span>
+                <span>{isAnalyzing ? 'Mengupload...' : 'Upload Tangisan'}</span>
+              </button>
+              <button
+                onClick={saveLocally}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors duration-200 text-sm font-medium"
+              >
+                <DownloadIcon />
+                <span>Simpan Lokal</span>
               </button>
               <button
                 onClick={handleDelete}

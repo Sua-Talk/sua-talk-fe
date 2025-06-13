@@ -52,8 +52,8 @@ export const apiAuth = {
     apiFetch('/auth/google/callback', {
       method: 'GET',
     }),
-  completeRegistration: (data: { email: string; code: string; password: string; firstName: string; lastName: string }) =>
-    apiFetch('/auth/complete-registration', {
+  completeRegistration: (data: { email: string;  password: string; firstName: string; lastName: string }) =>
+    apiFetch('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     }),

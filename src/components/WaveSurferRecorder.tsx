@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { apiAudio } from '@/lib/apiAudio';
+import { localStorageUtils, LocalRecording } from '@/lib/localStorage';
+import { v4 as uuidv4 } from 'uuid';
 
 // Simple icons
 const MicIcon = () => (
@@ -54,7 +57,12 @@ const AnalyzeIcon = () => (
   </svg>
 );
 
-const WaveSurferRecorder = () => {
+interface WaveSurferRecorderProps {
+  onRecordingUploaded?: () => void;
+  onLocalSave?: () => void;
+}
+
+const WaveSurferRecorder: React.FC<WaveSurferRecorderProps> = ({ onRecordingUploaded, onLocalSave }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -276,16 +284,54 @@ const WaveSurferRecorder = () => {
     }
   };
 
-  const analyzeAudio = () => {
+  const analyzeAudio = async () => {
     if (!audioBlob) return;
 
     setIsAnalyzing(true);
     
-    // Simulate analysis
-    setTimeout(() => {
+    try {
+      const babyId = localStorage.getItem('selectedBabyId');
+      if (!babyId) {
+        throw new Error('No baby selected');
+      }
+
+      const file = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
+      await apiAudio.uploadAudio({
+        babyId,
+        title: generateRecordingName(),
+        recordingDate: new Date().toISOString(),
+        audioFile: file
+      });
+      
+      // Call the callback to refresh recordings
+      onRecordingUploaded?.();
+      
+      alert('Upload berhasil!');
+    } catch (error) {
+      console.error('Error uploading audio:', error);
+      alert('Terjadi kesalahan saat mengupload audio');
+    } finally {
       setIsAnalyzing(false);
-      alert('Analisis selesai! Hasil: Tangisan menunjukkan bayi lapar. Coba beri makan atau ASI.');
-    }, 3000);
+    }
+  };
+
+  const saveLocally = () => {
+    if (!audioBlob || !audioUrl) return;
+
+    const localRecording: LocalRecording = {
+      id: uuidv4(),
+      title: generateRecordingName(),
+      fileUrl: audioUrl,
+      fileSize: audioBlob.size,
+      duration: recordedDuration,
+      format: 'wav',
+      recordingDate: new Date().toISOString(),
+      source: 'recorder'
+    };
+
+    localStorageUtils.saveRecording(localRecording);
+    onLocalSave?.();
+    alert('Rekaman berhasil disimpan secara lokal!');
   };
 
   return (
@@ -357,15 +403,22 @@ const WaveSurferRecorder = () => {
               </button>
             </div>
             
-            {/* Analysis Button */}
-            <div className="flex justify-center">
+            {/* Analysis and Local Save Buttons */}
+            <div className="flex justify-center space-x-2">
               <button
                 onClick={analyzeAudio}
                 disabled={isAnalyzing}
                 className="flex items-center space-x-2 px-4 py-2 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <AnalyzeIcon />
-                <span>{isAnalyzing ? 'Menganalisis...' : 'Analisis Tangisan'}</span>
+                <span>{isAnalyzing ? 'Mengupload...' : 'Upload Tangisan'}</span>
+              </button>
+              <button
+                onClick={saveLocally}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors duration-200 text-sm font-medium"
+              >
+                <DownloadIcon />
+                <span>Simpan Lokal</span>
               </button>
             </div>
           </div>

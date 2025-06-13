@@ -2,9 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 const SideBar = () => {
   const router = useRouter();
+  const { isAuthenticated, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -53,12 +55,35 @@ const SideBar = () => {
           <h1 className="text-xl font-bold text-blue-700 mb-4">SuaTalk</h1>
           
           <nav className="space-y-3">
-            <button
-              onClick={() => router.push('/login')}
-              className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
-            >
-              Get Started
-            </button>
+            {isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => router.push('/sound')}
+                  className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Go to Sound
+                </button>
+                <button
+                  onClick={() => router.push('/babies')}
+                  className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Go to Babies
+                </button>
+                <button
+                  onClick={logout}
+                  className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => router.push('/login')}
+                className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
+                Get Started
+              </button>
+            )}
           </nav>
         </div>
       </div>

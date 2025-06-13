@@ -15,7 +15,7 @@ const SuaTalk = () => {
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
-      router.push('/sound');
+      router.push('/home');
     } else {
       router.push('/auth/login');
     }

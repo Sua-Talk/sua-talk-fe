@@ -3,9 +3,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import apiAuth from '@/lib/apiAuth';
+import { useAuth } from '@/context/AuthContext';
 
 const VerifyEmailPage = () => {
   const router = useRouter();
+  const { register } = useAuth();
   const searchParams = useSearchParams();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -15,9 +17,6 @@ const VerifyEmailPage = () => {
   const lastName = searchParams.get('lastName') || '';
 
   useEffect(() => {
-    (async () => {
-      await apiAuth.checkEmail(email);
-    })();
     inputRefs.current = inputRefs.current.slice(0, 6);
   }, []);
 
@@ -41,9 +40,15 @@ const VerifyEmailPage = () => {
     e.preventDefault();
     const code = otp.join('');
     try {
-      await apiAuth.confirmEmail(email, code);
-      await apiAuth.completeRegistration({ email, code, password, firstName, lastName });
-      router.push('/auth/login');
+      // First verify the email with OTP
+      const verifyResponse = await apiAuth.confirmEmail(email, code);
+      if (!verifyResponse.success) {
+        throw new Error('Email verification failed');
+      }
+
+      // Then complete the registration using AuthContext
+      await register(email, password, firstName, lastName);
+      router.push('/sound');
     } catch (error: any) {
       alert(error?.message || 'Verification or registration failed');
     }
@@ -51,7 +56,10 @@ const VerifyEmailPage = () => {
 
   const handleResendVerification = async () => {
     try {
-      await apiAuth.resendVerification(email);
+      const response = await apiAuth.resendVerification(email);
+      if (!response.success) {
+        throw new Error('Resend verification failed');
+      }
       alert('Verification email resent');
     } catch (error: any) {
       alert(error?.message || 'Resend failed');
