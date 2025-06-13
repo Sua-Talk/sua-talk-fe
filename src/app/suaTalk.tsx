@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 const SuaTalk = () => {
   const featuresRef = useRef<HTMLDivElement>(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -25,11 +25,11 @@ const SuaTalk = () => {
   return (
     <div className="min-h-screen bg-white sm:bg-transparent sm:flex sm:justify-center relative z-10">
       <div className="w-full sm:w-full sm:max-w-sm sm:bg-white min-h-screen">
-        
+
         {/* Header */}
         <header className="flex justify-between items-center px-6 py-5 bg-white shadow-sm">
           <div className="text-xl font-bold text-blue-700">SuaTalk</div>
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
           >
@@ -65,7 +65,7 @@ const SuaTalk = () => {
         >
           <div className="p-4">
             <h1 className="text-xl font-bold text-blue-700 mb-4">SuaTalk</h1>
-            
+
             <nav className="space-y-3">
               <button
                 onClick={() => router.push('/home')}
@@ -86,7 +86,7 @@ const SuaTalk = () => {
                 Sound Analysis
               </button>
               <button
-                onClick={() => router.push('/auth/logout')}
+                onClick={logout}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout
@@ -112,13 +112,13 @@ const SuaTalk = () => {
               Deteksi tangisan bayi menggunakan AI untuk membantu orang tua secara lebih akurat.
             </p>
             <div className="space-y-3">
-              <button 
+              <button
                 onClick={handleGetStarted}
                 className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-colors"
               >
                 Mulai Deteksi
               </button>
-              <button 
+              <button
                 onClick={scrollToFeatures}
                 className="w-full bg-white text-blue-500 border-2 border-blue-500 py-3 px-6 rounded-lg font-medium hover:bg-blue-50 transition-colors"
               >
@@ -138,7 +138,7 @@ const SuaTalk = () => {
               <h3 className="font-semibold text-gray-800 mb-2">Deteksi Tangisan Berbasis AI</h3>
               <p className="text-sm text-gray-600">Deteksi tangisan menggunakan AI dengan akurasi tinggi.</p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
                 <span className="text-xl">🔔</span>
@@ -146,7 +146,7 @@ const SuaTalk = () => {
               <h3 className="font-semibold text-gray-800 mb-2">Notifikasi Real-time</h3>
               <p className="text-sm text-gray-600">Dapatkan notifikasi secara real-time saat bayi menangis.</p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
                 <span className="text-xl">📚</span>

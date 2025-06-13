@@ -24,7 +24,7 @@ interface ApiBabyResponse {
 
 const BabiesPage = () => {
   const router = useRouter();
-  const { isAuthenticated, getUserInfo } = useAuth();
+  const { isAuthenticated, getUserInfo, logout } = useAuth();
   const [babies, setBabies] = useState<BabyProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +41,7 @@ const BabiesPage = () => {
         console.log('Fetching babies...');
         const response = await apiBabies.getBabies();
         console.log('API Response:', response);
-        
+
         if (response.success && Array.isArray(response.data.babies)) {
           console.log('Response data is valid array:', response.data);
           const mappedBabies = response.data.babies.map((baby: ApiBabyResponse) => {
@@ -135,7 +135,7 @@ const BabiesPage = () => {
         >
           <div className="p-4">
             <h1 className="text-xl font-bold text-blue-700 mb-4">SuaTalk</h1>
-            
+
             <nav className="space-y-3">
               <button
                 onClick={() => router.push('/home')}
@@ -156,7 +156,7 @@ const BabiesPage = () => {
                 Sound Analysis
               </button>
               <button
-                onClick={() => router.push('/auth/logout')}
+                onClick={logout}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout
@@ -189,7 +189,7 @@ const BabiesPage = () => {
             ) : !Array.isArray(babies) || babies.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-500 mb-4">No babies data about your babies for now, let's get started by adding your first</div>
-                <button 
+                <button
                   onClick={() => router.push('/babies/new')}
                   className="text-blue-500 hover:text-blue-600 font-medium"
                 >
@@ -199,8 +199,8 @@ const BabiesPage = () => {
             ) : (
               <div className="grid grid-cols-1 gap-6">
                 {babies.map((baby) => (
-                  <Link 
-                    href={`/babies/${baby.id}`} 
+                  <Link
+                    href={`/babies/${baby.id}`}
                     key={baby.id}
                     className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 hover:border-blue-200"
                   >

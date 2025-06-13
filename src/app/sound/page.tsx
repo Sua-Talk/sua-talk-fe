@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import WaveSurferRecorder from '../../components/WaveSurferRecorder';
 import AudioUploader from '../../components/AudioUploader';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth} from '../../context/AuthContext';
 import { apiAudio } from '@/lib/apiAudio';
 import { localStorageUtils, LocalRecording } from '@/lib/localStorage';
 
@@ -41,7 +41,7 @@ interface ApiResponse {
 }
 
 const SoundPage = () => {
-  const { isAuthenticated, getUserInfo } = useAuth();
+  const { isAuthenticated, getUserInfo, logout } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [recordings, setRecordings] = useState<AudioRecording[]>([]);
@@ -191,7 +191,7 @@ const SoundPage = () => {
         >
           <div className="p-4">
             <h1 className="text-xl font-bold text-blue-700 mb-4">SuaTalk</h1>
-            
+
             <nav className="space-y-3">
               <button
                 onClick={() => router.push('/home')}
@@ -212,7 +212,7 @@ const SoundPage = () => {
                 Sound Analysis
               </button>
               <button
-                onClick={() => router.push('/auth/logout')}
+                onClick={logout}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout
@@ -240,8 +240,8 @@ const SoundPage = () => {
                 <h2 className="text-xl font-bold text-gray-800 mb-2">Rekam Audio Langsung</h2>
                 <p className="text-sm text-gray-600">Rekam tangisan bayi secara langsung untuk dianalisis</p>
               </div>
-              <WaveSurferRecorder 
-                onRecordingUploaded={fetchRecordings} 
+              <WaveSurferRecorder
+                onRecordingUploaded={fetchRecordings}
                 onLocalSave={handleLocalSave}
               />
             </section>
@@ -261,8 +261,8 @@ const SoundPage = () => {
                 <h2 className="text-xl font-bold text-gray-800 mb-2">Unggah Audio</h2>
                 <p className="text-sm text-gray-600">Pilih file audio untuk menganalisis jenis tangisan bayi</p>
               </div>
-              <AudioUploader 
-                onUploadComplete={fetchRecordings} 
+              <AudioUploader
+                onUploadComplete={fetchRecordings}
                 onLocalSave={handleLocalSave}
               />
             </section>

@@ -8,7 +8,7 @@ import apiBabies from '@/lib/apiBabies';
 
 const HomePage = () => {
   const router = useRouter();
-  const { isAuthenticated, getUserInfo, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, getUserInfo, isLoading: authLoading, logout } = useAuth();
   const [selectedBaby, setSelectedBaby] = useState<BabyProfile | null>(null);
   const [babies, setBabies] = useState<BabyProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,10 +47,10 @@ const HomePage = () => {
 
           // Get selected baby from localStorage or use first baby
           const storedBabyId = localStorage.getItem('selectedBabyId');
-          const babyToSelect = storedBabyId 
+          const babyToSelect = storedBabyId
             ? mappedBabies.find((b: BabyProfile) => b.id === storedBabyId)
             : mappedBabies[0];
-          
+
           if (babyToSelect) {
             setSelectedBaby(babyToSelect);
             localStorage.setItem('selectedBabyId', babyToSelect.id);
@@ -138,7 +138,7 @@ const HomePage = () => {
         >
           <div className="p-4">
             <h1 className="text-xl font-bold text-blue-700 mb-4">SuaTalk</h1>
-            
+
             <nav className="space-y-3">
               <button
                 onClick={() => router.push('/home')}
@@ -159,7 +159,7 @@ const HomePage = () => {
                 Sound Analysis
               </button>
               <button
-                onClick={() => router.push('/auth/logout')}
+                onClick={logout}
                 className="w-full bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
               >
                 Logout

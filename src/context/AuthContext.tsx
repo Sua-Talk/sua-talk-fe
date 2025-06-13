@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('user_info');
     localStorage.removeItem('token_expiration');
     setIsAuthenticated(false);
-    router.push('/auth/login');
+    router.push('/');
   };
 
   const register = async (email: string, password: string, firstName: string, lastName: string) => {
